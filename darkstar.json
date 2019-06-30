@@ -1,0 +1,4 @@
+[
+    {"Name": "Actuators Pressure", "PChannel": "72", "NChannel": "-1", "resolution": "2", "slope": "75", "intercept": "-37.5"},
+    {"Name": "Chamber Pressure", "PChannel": "113", "NChannel": "-1", "resolution": "2", "slope": "75", "intercept": "-37.5"}
+]
