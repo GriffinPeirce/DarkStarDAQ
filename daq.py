@@ -1,46 +1,45 @@
-"""
-Demonstrates how to stream using the eStream functions.
-
-"""
 from datetime import datetime
 import sys
-import thermocouple as tc
+# import thermocouple as tc
 import numpy as np
 from thermocouples_reference import thermocouples
 import json
 
 from labjack import ljm
-from darkstarsensor import LJSensor
+from analogsensor import AnalogLJSensor
+from digitalsensor import DigitalLJSensor
 
-sensors = dict()
-
+analog_sensors = dict()
+digital_sensors = dict()
 with open('darkstar.json', 'r') as f:
     config_dict = json.load(f)
 
-for sensor in config_dict:
-    print(sensor['Name'])
-    sensors.
-    
-
-print(sensors_dict)
-
-'''
-MAX_REQUESTS = 10  # The number of eStreamRead calls that will be performed.
+for sensor in config_dict['Analog Sensors']:
+    analog_sensors[sensor['Name']]=AnalogLJSensor(sensor['Name'], sensor['PChannel'], sensor['NChannel'], sensor['range'], sensor['slope'], sensor['intercept'])    
+for sensor in config_dict['Digital Sensors']:
+    digital_sensors[sensor['Name']]=DigitalLJSensor(sensor['Name'], sensor['Address'])
 
 # Open first found LabJack
-handle = ljm.openS("ANY", "ANY", "ANY")  # Any device, Any connection, Any identifier
-#handle = ljm.openS("T7", "ANY", "ANY")  # T7 device, Any connection, Any identifier
-#handle = ljm.openS("T4", "ANY", "ANY")  # T4 device, Any connection, Any identifier
-#handle = ljm.open(ljm.constants.dtANY, ljm.constants.ctANY, "ANY")  # Any device, Any connection, Any identifier
+# handle = ljm.openS("ANY", "ANY", "ANY")  # Any device, Any connection, Any identifier
+# handle = ljm.openS("T7", "ANY", "ANY")  # T7 device, Any connection, Any identifier
+# handle = ljm.openS("T4", "ANY", "ANY")  # T4 device, Any connection, Any identifier
+# handle = ljm.open(ljm.constants.dtANY, ljm.constants.ctANY, "ANY")  # Any device, Any connection, Any identifier
 
-info = ljm.getHandleInfo(handle)
-print("Opened a LabJack with Device type: %i, Connection type: %i,\n"
-      "Serial number: %i, IP address: %s, Port: %i,\nMax bytes per MB: %i" %
-      (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
+# info = ljm.getHandleInfo(handle)
+# print("Opened a LabJack with Device type: %i, Connection type: %i,\n"
+#       "Serial number: %i, IP address: %s, Port: %i,\nMax bytes per MB: %i" %
+#       (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
 
-deviceType = info[0]
+# deviceType = info[0]
+aScanListNames = []
 
 # Stream Configuration
+for sensor in analog_sensors:
+	# aScanListNames.append("AIN"+sensor["PChannel"])
+	print(sensor.getName())
+
+print aScanListNames
+'''
 aScanListNames = ["AIN14", "AIN98", "AIN99"]  # Scan list names to stream
 numAddresses = len(aScanListNames)
 aScanList = ljm.namesToAddresses(numAddresses, aScanListNames)[0]

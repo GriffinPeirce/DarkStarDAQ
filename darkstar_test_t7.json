@@ -1,0 +1,8 @@
+{"Analog Sensors": [
+    {"Name": "Actuators Pressure", "PChannel": 2, "NChannel": -1, "range": 10.0, "slope": 75, "intercept": -37.5, "AIN_EF":{}},
+    {"Name": "Ambient Temp", "PChannel": 0, "NChannel": 1, "range": 1.0, "slope": 1, "intercept": 0, "AIN_EF":{"index":21}}
+	],
+"Digital Sensors": [
+    {"Name": "Test Active", "Address": 2012}
+    ]
+}

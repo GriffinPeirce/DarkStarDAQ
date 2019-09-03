@@ -1,0 +1,19 @@
+{"Analog Sensors": [
+	{"Name": "20Hz Clock", "PChannel": "61522", "NChannel": "-1", "range":"-1", "slope":"1", "intercept":"0"},
+    {"Name": "Chamber Pressure", "PChannel": "0", "NChannel": "-1", "range": "10.0", "slope": "125", "intercept": "-62.5"},
+	{"Name": "Igniter Fuel Inlet Pressure", "PChannel": "2", "NChannel": "-1", "range": "10.0", "slope": "125", "intercept": "-62.5"},
+	{"Name": "Fuel Ullage", "PChannel": "4", "NChannel": "-1", "range": "10.0", "slope": "1", "intercept": "0"},
+    {"Name": "LOX Ullage 1", "PChannel": "6", "NChannel": "-1", "range": "10.0", "slope": "1", "intercept": "0"},
+    {"Name": "LOX Ullage Pressure", "PChannel": "8", "NChannel": "-1", "range": "10.0", "slope": "403", "intercept": "-250"},
+    {"Name": "Igniter GOX Inlet Pressure", "PChannel": "10", "NChannel": "-1", "range": "10.0", "slope": "203", "intercept": "-124"},
+    {"Name": "Thrust LC", "PChannel": "12", "NChannel": "-1", "range": "0.01", "slope": "1", "intercept": "0"},
+    {"Name": "Fuel Tank Pressure", "PChannel": "14", "NChannel": "-1", "range": "10.0", "slope": "381", "intercept": "-249"},
+    {"Name": "Fuel Ullage Pressure", "PChannel": "16", "NChannel": "-1", "range": "10.0", "slope": "369", "intercept": "-245"},
+    {"Name": "Fuel Injector Pressure", "PChannel": "18", "NChannel": "-1", "range": "10.0", "slope": "373", "intercept": "244"},
+    {"Name": "LOX Tank Pressure", "PChannel": "20", "NChannel": "-1", "range": "10.0", "slope": "265", "intercept": "-125"},
+    {"Name": "LOX Injector Pressure", "PChannel": "22", "NChannel": "-1", "range": "10.0", "slope": "265", "intercept": "-125"}
+	],
+"Digital Sensors": [
+	{"Name": "Test Active", "Address": "2012"}
+    ]
+}

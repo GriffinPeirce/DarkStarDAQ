@@ -28,17 +28,6 @@
     {"Name": "Throat Temp", "PChannel": "96", "NChannel": "104", "range": "1.0", "slope": "1", "intercept": "0"}
 	],
 "Digital Sensors": [
-	{"Name": "Fuel Press Valve", "Address": "2000"},
-	{"Name": "LOX Press Valve", "Address": "2001"},
-    {"Name": "Fuel Vent Valve", "Address": "2002"},
-    {"Name": "LOX Vent Valve", "Address": "2003"},
-    {"Name": "Fuel Purge Valve", "Address": "2004"},
-    {"Name": "LOX Purge Valve", "Address": "2005"},
-    {"Name": "Igniter Spark", "Address": "2006"},
-    {"Name": "Igniter Fuel Valve", "Address": "2007"},
-    {"Name": "Igniter GOX Valve", "Address": "2008"},
-    {"Name": "Main Fuel Valve", "Address": "2009"},
-    {"Name": "Main Oxidizer Valve", "Address": "2010"},
-    {"Name": "Test Active", "Address": "2011"}
+    {"Name": "Test Active", "Address": "2012"}
     ]
 }
