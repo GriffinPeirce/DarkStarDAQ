@@ -2,7 +2,6 @@
 import sys
 from datetime import datetime
 import numpy as np
-from thermocouples_reference import thermocouples
 import json
 import collections
 from collections import OrderedDict

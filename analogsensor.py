@@ -4,7 +4,7 @@ class AnalogLJSensor():
         self.__negative_channel = None
         self.__name = None
         self.__resolution = None
-        self.__analog_EF = dict()
+        self.__analog_EF = None
         self.__calibration_slope = None
         self.__calibration_intercept = None
 

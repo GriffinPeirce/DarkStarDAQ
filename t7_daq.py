@@ -3,23 +3,27 @@ from datetime import datetime
 import sys
 import numpy as np
 import json
-
 from labjack import ljm
+
+import collections
+from collections import OrderedDict
 from analogsensor import AnalogLJSensor
 from digitalsensor import DigitalLJSensor
 
-analog_sensors = dict()
-digital_sensors = dict()
-with open('darkstar_test_t7.json', 'r') as f:
-	config_dict = json.load(f)
+analog_sensors = collections.OrderedDict()
+digital_sensors = collections.OrderedDict()
+
+with open('darkstar_t7.json', 'r') as f:
+  config_data = f.read()
+  config_dict = json.loads(config_data.decode('utf-8'), object_pairs_hook=OrderedDict)
 
 for sensor in config_dict['Analog Sensors']:
-	analog_sensors[sensor['Name']]=AnalogLJSensor(sensor['Name'], sensor['PChannel'], sensor['NChannel'], sensor['range'], sensor['slope'], sensor['intercept'],sensor['AIN_EF'])    
+	analog_sensors[sensor['Name']]=AnalogLJSensor(sensor['Name'], sensor['PChannel'], sensor['NChannel'], sensor['range'], sensor['slope'], sensor['intercept'],sensor['ef_index'])    
 for sensor in config_dict['Digital Sensors']:
 	digital_sensors[sensor['Name']]=DigitalLJSensor(sensor['Name'], sensor['Address'])
 
 # Open first found LabJack
-handle = ljm.openS("ANY", "ANY", "ANY")  # Any device, Any connection, Any identifier
+handle = ljm.openS("T7", "ANY", "ANY")  # Any device, Any connection, Any identifier
 # handle = ljm.openS("T7", "ANY", "ANY")  # T7 device, Any connection, Any identifier
 # handle = ljm.openS("T4", "ANY", "ANY")  # T4 device, Any connection, Any identifier
 # handle = ljm.open(ljm.constants.dtANY, ljm.constants.ctANY, "ANY")  # Any device, Any connection, Any identifier
@@ -30,34 +34,69 @@ print("Opened a LabJack with Device type: %i, Connection type: %i,\n"
 	  (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
 
 # deviceType = info[0]
-aScanListNames = []
+aScanList = []
+channelNames = []
+
+# Stream Configuration
+for sensorName, sensor in analog_sensors.items():
+    if sensor is not None:
+       aScanList.append(int(sensor.getPositiveChannel()))
+       channelNames.append(str(sensor.getName()))
+       print(int(sensor.getPositiveChannel()))
+       print(str(sensor.getName()))
+
+print "Scan list" , aScanList
+
 aWriteNames = []
 aWriteValues = []
-
+aScanListNames = []
 # print(type(analog_sensors))
 # Stream Configuration
 for sensor in analog_sensors:
-	aScanListNames.append("AIN"+str(analog_sensors[sensor].getPositiveChannel()))
-	if(analog_sensors[sensor].getNegativeChannel() > 0):
+	pChannel = str(analog_sensors[sensor].getPositiveChannel())
+	nChannel = int(analog_sensors[sensor].getNegativeChannel())
+	aScanListNames.append("AIN"+pChannel)
+	if(nChannel > 0):
 		print("configuring negative channel")
-		aWriteNames.append("AIN"+str(analog_sensors[sensor].getPositiveChannel())+"_NEGATIVE_CH")
-		aWriteValues.append(analog_sensors[sensor].getNegativeChannel())
-	print(analog_sensors[sensor].)
+		aWriteNames.append("AIN"+pChannel+"_NEGATIVE_CH")
+		aWriteValues.append(nChannel)
+	if(int(analog_sensors[sensor].getExtendedFeatures())>0):
+		aWriteNames.append("AIN"+pChannel+"_EF_INDEX")
+		aWriteValues.append(int(analog_sensors[sensor].getExtendedFeatures()))
+
+
+
+print "Scan list names" , aScanListNames
+print "Names written" , aWriteNames
+print "Values written" , aWriteValues
+
 
 ljm.eWriteNames(handle, len(aWriteNames), aWriteNames, aWriteValues)
+
 results = ljm.eReadNames(handle, len(aWriteNames), aWriteNames)
+
 
 print("\neReadNames results: ")
 for i in range(len(aWriteNames)):
-    print("    Name - %s, value : %f" % (aWriteNames[i], results[i]))
-	# print(type(sensor))
-	# print(analog_sensors[sensor].getName())
-	# print(sensor)
-	# print(sensor.getName())
+    print("    Name - %s, value : %d" % (aWriteNames[i], results[i]))
 
-print aScanListNames
-print aWriteNames
-print aWriteValues
+
+aReadListNames = []
+channelNames = []
+
+# Read Configuration
+for sensorName, sensor in analog_sensors.items():
+    if sensor is not None:
+    	channelNames.append(str(sensor.getName()))
+    	if(int(sensor.getExtendedFeatures()) > 0):
+    		aReadListNames.append("AIN"+str(sensor.getPositiveChannel())+"_EF_READ_A")
+    	else:
+    		aReadListNames.append("AIN"+str(sensor.getPositiveChannel()))
+
+results = ljm.eReadNames(handle, len(aReadListNames), aReadListNames)
+
+for i in range(len(aReadListNames)):
+    print("    Name - %s, value : %f" % (channelNames[i], results[i]))
 
 '''
 aScanListNames = ["AIN14", "AIN98", "AIN99"]  # Scan list names to stream
