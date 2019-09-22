@@ -24,13 +24,13 @@ class MyDialog(QtGui.QDialog):
         self.flowMeterAddress = 6 # AIN3
         self.tankPressureAddress = 2 # AIN1
         self.outletPressureAddress = 0 # AIN0
+        self.clock40MHz = 61520
         self.clock20Hz = 61522
         self.actuatorsAddresses = [self.ventValveAddress, self.mainValveAddress]
         self.actuatorsDataTypes = [ljm.constants.UINT16, ljm.constants.UINT16]
         self.sensorsAddresses = [self.clock20Hz, self.tankPressureAddress, self.outletPressureAddress, self.flowMeterAddress]
         self.sensorDataTypes = [ljm.constants.UINT32, ljm.constants.FLOAT32, ljm.constants.FLOAT32, ljm.constants.FLOAT32]
         self.sensorMScaling = np.array([1, 125, 125, 1/187.7])
-        print self.sensorMScaling
         self.sensorBScaling = np.array([0, -62.5, -62.5, 0])
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
@@ -40,11 +40,17 @@ class MyDialog(QtGui.QDialog):
         self.ui.eStopButton.clicked.connect(self.eStop)
         self.ui.logButton.clicked.connect(self.log)
         self.dataLog = np.empty([0,4])
+        self.tankPressure = 0
+        self.outletPressure = 0
+        self.flowRate = 0
         self.dataLogPacketSize = 100
+        self.actuatorsUpdateIntervalMs = 100
+        self.lcdUpdateIntervalMs = 300
+        self.dataLogIntervalMs = 50
         self.fig, self.fig_axes = plt.subplots(ncols=1, nrows=3)
-        self.fig_axes[0].plot(np.random.rand(100))
-        self.fig_axes[1].plot(np.random.rand(100))
-        self.fig_axes[2].plot(np.random.rand(100))
+        self.tankPressureRingBuffer = np.zeros(200)
+        self.outletPressureRingBuffer = np.zeros(200)
+        self.flowRateRingBuffer = np.zeros(200)
         self.addmpl(self.fig)
         self.csvFile = None
         self.csvFileName = ""
@@ -74,7 +80,7 @@ class MyDialog(QtGui.QDialog):
             self.csvFileName = 'coldflow_'+str(datetime.now().strftime('%Y%m%d%H%M%S'))+'.csv'
             with open(self.csvFileName, mode='w') as data_file:
                 data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                data_writer.writerow(['20Hz Clock', 'Tank Pressure', 'Outlet Pressure', 'Flow Rate Current', 'Flow Rate Raw'])
+                data_writer.writerow(['20Hz Clock', 'Tank Pressure', 'Outlet Pressure', 'Flow Rate Current', 'Flow Rate Raw', 'Vent Valve' , 'Main Valve'])
         if self.ui.logButton.isChecked():
             self.ui.logButton.setIcon(self.openValveIcon)
         else:
@@ -83,15 +89,24 @@ class MyDialog(QtGui.QDialog):
     def captureChannels(self):
         try:
             ret = ljm.eReadAddresses(self.handle, len(self.sensorsAddresses), self.sensorsAddresses, self.sensorDataTypes)
-            self.ui.clock20HzLCD.display(ret[0])
-            self.ui.flowMeterLCD.display(ret[3])
-            self.ui.tankPressureLCD.display(ret[1])
-            self.ui.outletPressureLCD.display(ret[2])
 
             scaled = np.copy(np.asarray(ret))
             scaled = scaled * self.sensorMScaling
             scaled = scaled + self.sensorBScaling
-            scaled = np.append(scaled, np.asarray(ret[3]))
+
+            self.flowRate = scaled[3]
+            self.flowRateRingBuffer = np.roll(self.flowRateRingBuffer,-1)
+            self.flowRateRingBuffer[-1] = self.flowRate
+
+            self.tankPressure = scaled[1]
+            self.tankPressureRingBuffer = np.roll(self.tankPressureRingBuffer,-1)
+            self.tankPressureRingBuffer[-1] = self.tankPressure
+
+            self.outletPressure = scaled[2]
+            self.outletPressureRingBuffer = np.roll(self.outletPressureRingBuffer,-1)
+            self.outletPressureRingBuffer[-1] = self.outletPressure
+
+            scaled = np.append(scaled, np.asarray([ret[3], self.ventValveState, self.mainValveState]))
 
             if self.dataLog.shape[0] == 0:
                 self.dataLog = np.copy(scaled)
@@ -106,7 +121,7 @@ class MyDialog(QtGui.QDialog):
                         data_writer.writerows(self.dataLog)
                 self.dataLog = np.empty([0,4])
         finally:
-            QtCore.QTimer.singleShot(1, self.captureChannels)
+            QtCore.QTimer.singleShot(self.dataLogIntervalMs, self.captureChannels)
 
     def writeActuators(self):
         try:
@@ -131,7 +146,37 @@ class MyDialog(QtGui.QDialog):
                                 self.actuatorsDataTypes, 
                                 [not self.ventValveState, not self.mainValveState])
         finally:
-            QtCore.QTimer.singleShot(100, self.writeActuators)
+            QtCore.QTimer.singleShot(self.actuatorsUpdateIntervalMs, self.writeActuators)
+
+    def renderReadings(self):
+        try:
+            self.ui.flowMeterLCD.display(self.flowRate)
+            self.ui.tankPressureLCD.display(self.tankPressure)
+            self.ui.outletPressureLCD.display(self.outletPressure)
+            self.fig_axes[0].clear()
+            self.fig_axes[0].plot(self.tankPressureRingBuffer)
+            self.fig_axes[0].set_xticks([])
+            self.fig_axes[0].set_ylim(0,np.amax(self.tankPressureRingBuffer))
+            self.fig_axes[0].set_ylabel('PSI')
+            self.fig_axes[0].set_title('Tank Pressure')
+
+            self.fig_axes[1].clear()
+            self.fig_axes[1].plot(self.outletPressureRingBuffer)
+            self.fig_axes[1].set_xticks([])
+            self.fig_axes[1].set_ylim(0,np.amax(self.outletPressureRingBuffer))
+            self.fig_axes[1].set_ylabel('PSI')
+            self.fig_axes[1].set_title('Outlet Pressure')
+            
+            self.fig_axes[2].clear()
+            self.fig_axes[2].plot(self.flowRateRingBuffer)
+            self.fig_axes[2].set_xticks([])
+            self.fig_axes[2].set_ylim(0,np.amax(self.flowRateRingBuffer))
+            self.fig_axes[2].set_ylabel('Kg s')
+            self.fig_axes[2].set_title('Mass Flow Rate')
+            self.canvas.draw()
+
+        finally:
+            QtCore.QTimer.singleShot(self.lcdUpdateIntervalMs, self.renderReadings)
 
     def actuateMainValve(self):
         print "Changing state of main valve"
@@ -150,8 +195,11 @@ class MyDialog(QtGui.QDialog):
         self.mainValveState = False
         self.ventValveState = False
 
-        self.ui.ventValveButton.setIcon(self.closedValveIcon)
-        self.ui.mainValveButton.setIcon(self.closedValveIcon)
+        # self.ui.ventValveButton.setIcon(self.closedValveIcon)
+        # self.ui.mainValveButton.setIcon(self.closedValveIcon)
+        self.ui.ventValveButton.setChecked(False)
+        self.ui.mainValveButton.setChecked(False)
+
         # aValues = [False, False]
         # ljm.eWriteAddresses(self.handle, len(aValues), self.actuatorsAddresses, self.actuatorsDataTypes, aValues)
 
@@ -160,5 +208,6 @@ if __name__ == "__main__":
     myapp = MyDialog()
     myapp.captureChannels()
     myapp.writeActuators()
+    myapp.renderReadings()
     myapp.show()
     sys.exit(app.exec_())
