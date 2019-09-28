@@ -71,9 +71,9 @@ class MyDialog(QtGui.QDialog):
     def log(self):
         self.logData = not self.logData
         if not self.logData:
-            print "Disabled data logging"
+            print ("Disabled data logging")
         elif self.logData:
-            print "Enabled data logging"
+            print ("Enabled data logging")
             self.csvFileName = 'coldflow_'+str(datetime.now().strftime('%Y%m%d%H%M%S'))+'.csv'
             with open(self.csvFileName, mode='w') as data_file:
                 data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -114,7 +114,6 @@ class MyDialog(QtGui.QDialog):
                 if(self.logData):
                     with open(self.csvFileName, mode='a') as data_file:
                         data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                        print self.dataLog.shape
                         data_writer.writerows(self.dataLog)
                 self.dataLog = np.empty([0,4])
         finally:
@@ -176,19 +175,19 @@ class MyDialog(QtGui.QDialog):
             QtCore.QTimer.singleShot(self.lcdUpdateIntervalMs, self.renderReadings)
 
     def actuateMainValve(self):
-        print "Changing state of main valve"
+        print ("Changing state of main valve")
         self.mainValveState = not self.mainValveState
-        print self.mainValveState
+        print (self.mainValveState)
         # ljm.eWriteAddress(self.handle, self.mainValveAddress, ljm.constants.UINT16, not self.mainValveState)
 
     def actuateVentValve(self):
-        print "Changing state of vent valve"
+        print ("Changing state of vent valve")
         self.ventValveState = not self.ventValveState
-        print self.ventValveState
+        print (self.ventValveState)
         # ljm.eWriteAddress(self.handle, self.ventValveAddress, ljm.constants.UINT16, not self.ventValveState)
 
     def eStop(self):
-        print "Estop activated"
+        print ("Estop activated")
         self.mainValveState = False
         self.ventValveState = False
 
