@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-
-
 import sys
 from PyQt4 import QtCore, QtGui
 from pid import Ui_Dialog
@@ -28,9 +25,9 @@ class MyDialog(QtGui.QDialog):
         self.clock20Hz = 61522
         self.actuatorsAddresses = [self.ventValveAddress, self.mainValveAddress]
         self.actuatorsDataTypes = [ljm.constants.UINT16, ljm.constants.UINT16]
-        self.sensorsAddresses = [self.clock20Hz, self.tankPressureAddress, self.outletPressureAddress, self.flowMeterAddress]
+        self.sensorsAddresses = [self.clock40MHz, self.tankPressureAddress, self.outletPressureAddress, self.flowMeterAddress]
         self.sensorDataTypes = [ljm.constants.UINT32, ljm.constants.FLOAT32, ljm.constants.FLOAT32, ljm.constants.FLOAT32]
-        self.sensorMScaling = np.array([1, 125, 125, 1/187.7])
+        self.sensorMScaling = np.array([1, 125, 125, 1/273.5])
         self.sensorBScaling = np.array([0, -62.5, -62.5, 0])
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
@@ -43,10 +40,10 @@ class MyDialog(QtGui.QDialog):
         self.tankPressure = 0
         self.outletPressure = 0
         self.flowRate = 0
-        self.dataLogPacketSize = 100
+        self.dataLogPacketSize = 1000
         self.actuatorsUpdateIntervalMs = 100
         self.lcdUpdateIntervalMs = 300
-        self.dataLogIntervalMs = 50
+        self.dataLogIntervalMs = 1
         self.fig, self.fig_axes = plt.subplots(ncols=1, nrows=3)
         self.tankPressureRingBuffer = np.zeros(200)
         self.outletPressureRingBuffer = np.zeros(200)
@@ -80,7 +77,7 @@ class MyDialog(QtGui.QDialog):
             self.csvFileName = 'coldflow_'+str(datetime.now().strftime('%Y%m%d%H%M%S'))+'.csv'
             with open(self.csvFileName, mode='w') as data_file:
                 data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                data_writer.writerow(['20Hz Clock', 'Tank Pressure', 'Outlet Pressure', 'Flow Rate Current', 'Flow Rate Raw', 'Vent Valve' , 'Main Valve'])
+                data_writer.writerow(['40MHz Clock', 'Tank Pressure', 'Outlet Pressure', 'Flow Rate Current', 'Flow Rate Raw', 'Vent Valve' , 'Main Valve'])
         if self.ui.logButton.isChecked():
             self.ui.logButton.setIcon(self.openValveIcon)
         else:
@@ -112,7 +109,7 @@ class MyDialog(QtGui.QDialog):
                 self.dataLog = np.copy(scaled)
             else:
                 self.dataLog = np.vstack((self.dataLog, scaled))
-            if self.dataLog.shape[0]%10 == 0: # Only save/plot once per 100 readings
+            if self.dataLog.shape[0]%self.dataLogPacketSize == 0: # Only save/plot once per 1000 readings
                 self.fig_axes[0].plot()
                 if(self.logData):
                     with open(self.csvFileName, mode='a') as data_file:
